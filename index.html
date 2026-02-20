@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Little Sister Games</title>
+  <style>
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      height: 100%;
+    }
+
+    body {
+      background-color: #ffb3c1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+
+    .container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 40px;
+      opacity: 0;
+      animation: fadeIn 0.8s ease forwards 0.2s;
+    }
+
+    @keyframes fadeIn {
+      to { opacity: 1; }
+    }
+
+    .logo {
+      image-rendering: pixelated;
+      width: 396px;
+      max-width: 90vw;
+      height: auto;
+    }
+
+    .email-link {
+      display: inline-block;
+      text-decoration: none;
+      transition: transform 0.15s ease, opacity 0.15s ease;
+    }
+
+    .email-link:hover {
+      transform: scale(1.15);
+      opacity: 0.75;
+    }
+
+    .email-icon {
+      image-rendering: pixelated;
+      width: 84px;
+      height: auto;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <img src="logoicon.png" alt="Little Sister Games" class="logo">
+    <a href="mailto:contact@littlesistergames.com" class="email-link" aria-label="Email us">
+      <img src="emailicon.png" alt="Email us" class="email-icon">
+    </a>
+  </div>
+</body>
+</html>
