@@ -16,57 +16,251 @@
     }
 
     body {
-      background-color: #ffb3c1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      background-color: #ffd6d6;
       min-height: 100vh;
+      overflow: hidden;
     }
 
-    .container {
+    .logo-wrap {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    .logo-wrap img {
+      width: 280px;
+      height: auto;
+      image-rendering: pixelated;
+      display: block;
+    }
+
+    .btn-wrap {
+      position: absolute;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 40px;
+      cursor: pointer;
+    }
+
+    .btn-img-container {
+      position: relative;
+      transition: transform 0.15s ease;
+    }
+
+    .btn-wrap:hover .btn-img-container {
+      transform: translateY(-6px);
+    }
+
+    .btn-img-container img.normal,
+    .btn-img-container img.hover-state {
+      display: block;
+      image-rendering: pixelated;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      transition: opacity 0.1s ease;
+    }
+
+    .btn-img-container img.hover-state {
       opacity: 0;
-      animation: fadeIn 0.8s ease forwards 0.2s;
     }
 
-    @keyframes fadeIn {
-      to { opacity: 1; }
+    .btn-wrap:hover .btn-img-container img.normal {
+      opacity: 0;
     }
 
-    .logo {
+    .btn-wrap:hover .btn-img-container img.hover-state {
+      opacity: 1;
+    }
+
+    .btn-popup {
+      margin-top: 10px;
+      opacity: 0;
+      transform: translateY(4px);
+      transition: opacity 0.15s ease, transform 0.15s ease;
+      pointer-events: none;
       image-rendering: pixelated;
-      width: 396px;
-      max-width: 90vw;
-      height: auto;
     }
 
-    .email-link {
-      display: inline-block;
-      text-decoration: none;
-      transition: transform 0.15s ease, opacity 0.15s ease;
+    .btn-wrap:hover .btn-popup {
+      opacity: 1;
+      transform: translateY(0);
     }
 
-    .email-link:hover {
-      transform: scale(1.15);
-      opacity: 0.75;
-    }
+    @media (max-width: 600px) {
+      body {
+        overflow: auto;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 40px;
+        padding: 60px 20px;
+      }
 
-    .email-icon {
-      image-rendering: pixelated;
-      width: 84px;
-      height: auto;
+      .logo-wrap {
+        position: static;
+        transform: none;
+      }
+
+      .btn-wrap {
+        position: static !important;
+        left: auto !important;
+        right: auto !important;
+        top: auto !important;
+        bottom: auto !important;
+      }
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <img src="logoicon.png" alt="Little Sister Games" class="logo">
-    <a href="mailto:contact@littlesistergames.com" class="email-link" aria-label="Email us">
-      <img src="emailicon.png" alt="Email us" class="email-icon">
-    </a>
+
+  <div class="logo-wrap">
+    <img src="littlesister_logo.png" alt="Little Sister Games">
   </div>
+
+  <!-- EMAIL BUTTON -->
+  <div class="btn-wrap" id="btn-email" onclick="window.location='mailto:contact@littlesistergames.com'">
+    <div class="btn-img-container" style="width:99px; height:63px;">
+      <img class="normal" src="email_logo.png" alt="Email" style="width:84px;">
+      <img class="hover-state" src="email_logohover.png" alt="Email hover" style="width:99px;">
+    </div>
+    <img class="btn-popup" src="email_popup.png" alt="Contact" style="width:195px;">
+  </div>
+
+  <!-- GAME BUTTON -->
+  <div class="btn-wrap" id="btn-game" onclick="window.open('https://store.steampowered.com/app/4486880/Lovers_Die/','_blank')">
+    <div class="btn-img-container" style="width:90px; height:90px;">
+      <img class="normal" src="loversdie_logo.png" alt="Lovers Die" style="width:75px;">
+      <img class="hover-state" src="loversdie_logohover.png" alt="Lovers Die hover" style="width:90px;">
+    </div>
+    <img class="btn-popup" src="loversdie_popup.png" alt="Lovers Die" style="width:221px;">
+  </div>
+
+  <script>
+    // Each button gets assigned a corner (tl, tr, bl, br) randomly on load.
+    // Its offset from that corner is stored as a percentage of vw/vh.
+    // On resize, position is recalculated from the same corner + same percentage offset,
+    // clamped so it never goes off screen.
+
+    const MARGIN = 30;
+
+    const btnDefs = [
+      { id: 'btn-email',  w: 195, h: 153 },  // w = popup width, h = btn+gap+popup
+      { id: 'btn-game',   w: 221, h: 180 }
+    ];
+
+    const corners = ['tl', 'tr', 'bl', 'br'];
+    const assigned = [];
+
+    const logoSafeW = 340;
+    const logoSafeH = 500;
+
+    function overlaps(ax, ay, aw, ah, bx, by, bw, bh, pad) {
+      return !(ax + aw + pad < bx || bx + bw + pad < ax ||
+               ay + ah + pad < by || by + bh + pad < ay);
+    }
+
+    function cornerOrigin(corner, vw, vh) {
+      switch(corner) {
+        case 'tl': return { ox: 0,  oy: 0  };
+        case 'tr': return { ox: vw, oy: 0  };
+        case 'bl': return { ox: 0,  oy: vh };
+        case 'br': return { ox: vw, oy: vh };
+      }
+    }
+
+    function applyPosition(btn, vw, vh) {
+      const { el, w, h, corner, pctX, pctY } = btn;
+      const { ox, oy } = cornerOrigin(corner, vw, vh);
+
+      // offset from corner, scaled to current viewport
+      let x, y;
+      if (corner === 'tl') { x = ox + pctX * vw; y = oy + pctY * vh; }
+      if (corner === 'tr') { x = ox - pctX * vw - w; y = oy + pctY * vh; }
+      if (corner === 'bl') { x = ox + pctX * vw; y = oy - pctY * vh - h; }
+      if (corner === 'br') { x = ox - pctX * vw - w; y = oy - pctY * vh - h; }
+
+      // clamp so button stays on screen
+      x = Math.max(MARGIN, Math.min(vw - w - MARGIN, x));
+      y = Math.max(MARGIN, Math.min(vh - h - MARGIN, y));
+
+      el.style.left = x + 'px';
+      el.style.top  = y + 'px';
+    }
+
+    function init() {
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+
+      const logoRect = {
+        x: vw / 2 - logoSafeW / 2,
+        y: vh / 2 - logoSafeH / 2,
+        w: logoSafeW,
+        h: logoSafeH
+      };
+
+      // Shuffle corners
+      const shuffled = corners.slice().sort(() => Math.random() - 0.5);
+      const placed = [];
+
+      btnDefs.forEach((def, i) => {
+        const el = document.getElementById(def.id);
+        const corner = shuffled[i];
+        const { ox, oy } = cornerOrigin(corner, vw, vh);
+
+        let x, y, attempts = 0;
+        const maxAttempts = 300;
+
+        do {
+          // random offset as fraction of viewport
+          const fracX = 0.05 + Math.random() * 0.35;
+          const fracY = 0.05 + Math.random() * 0.35;
+
+          if (corner === 'tl') { x = ox + fracX * vw;       y = oy + fracY * vh; }
+          if (corner === 'tr') { x = ox - fracX * vw - def.w; y = oy + fracY * vh; }
+          if (corner === 'bl') { x = ox + fracX * vw;       y = oy - fracY * vh - def.h; }
+          if (corner === 'br') { x = ox - fracX * vw - def.w; y = oy - fracY * vh - def.h; }
+
+          x = Math.max(MARGIN, Math.min(vw - def.w - MARGIN, x));
+          y = Math.max(MARGIN, Math.min(vh - def.h - MARGIN, y));
+
+          attempts++;
+
+          const logoOk  = !overlaps(x, y, def.w, def.h, logoRect.x, logoRect.y, logoRect.w, logoRect.h, 20);
+          const otherOk = placed.every(p => !overlaps(x, y, def.w, def.h, p.x, p.y, p.w, p.h, 20));
+
+          if (logoOk && otherOk) break;
+        } while (attempts < maxAttempts);
+
+        // store as percentage offset from corner for responsive repositioning
+        let pctX, pctY;
+        if (corner === 'tl') { pctX = (x - 0)    / vw; pctY = (y - 0)    / vh; }
+        if (corner === 'tr') { pctX = (vw - x - def.w) / vw; pctY = (y - 0)    / vh; }
+        if (corner === 'bl') { pctX = (x - 0)    / vw; pctY = (vh - y - def.h) / vh; }
+        if (corner === 'br') { pctX = (vw - x - def.w) / vw; pctY = (vh - y - def.h) / vh; }
+
+        assigned.push({ el, w: def.w, h: def.h, corner, pctX, pctY });
+        placed.push({ x, y, w: def.w, h: def.h });
+
+        el.style.left = x + 'px';
+        el.style.top  = y + 'px';
+      });
+    }
+
+    function onResize() {
+      if (window.innerWidth <= 600) return;
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      assigned.forEach(btn => applyPosition(btn, vw, vh));
+    }
+
+    init();
+    window.addEventListener('resize', onResize);
+  </script>
 </body>
 </html>
