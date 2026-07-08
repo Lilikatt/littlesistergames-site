@@ -198,11 +198,15 @@
       const vw = window.innerWidth;
       const vh = window.innerHeight;
 
+      // Measure the actual logo position and size at runtime
+      const logoPad = 30;
+      const logoEl = document.querySelector('.logo-wrap img');
+      const r = logoEl.getBoundingClientRect();
       const logoRect = {
-        x: vw / 2 - logoSafeW / 2,
-        y: vh / 2 - logoSafeH / 2,
-        w: logoSafeW,
-        h: logoSafeH
+        x: r.left - logoPad,
+        y: r.top - logoPad,
+        w: r.width + logoPad * 2,
+        h: r.height + logoPad * 2
       };
 
       // Shuffle corners
