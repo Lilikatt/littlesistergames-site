@@ -120,7 +120,7 @@
 </head>
 <body>
 
-  <div class="logo-wrap">
+  <div class="logo-wrap" onclick="rerandomise()" style="cursor:pointer;">
     <img src="littlesister_logo.png" alt="Little Sister Games">
   </div>
 
@@ -261,6 +261,11 @@
     }
 
     init();
+
+    function rerandomise() {
+      assigned.length = 0;
+      init();
+    }
     window.addEventListener('resize', onResize);
   </script>
 </body>
